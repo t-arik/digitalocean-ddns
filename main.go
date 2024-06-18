@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 )
 
 const (
@@ -18,12 +19,19 @@ const (
 )
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdin, nil))
+	timer := time.NewTicker(time.Minute)
+	for range timer.C {
+		ddns()
+	}
+}
+
+func ddns() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	targetIp, err := publicIp()
 
 	if err != nil {
 		logger.Error("error fetching the public ip", "error", err)
-		os.Exit(1)
+		return
 	}
 
 	logger.Info("fetched public ip", "ip", targetIp)
@@ -35,6 +43,7 @@ func main() {
 	records, err := client.getRecords(domain)
 	if err != nil {
 		logger.Error("error listing domains", "error", err)
+		return
 	}
 
 	for _, record := range records {
@@ -67,6 +76,10 @@ func publicIp() (string, error) {
 	response, err := http.Get(ipLookupApi)
 	if err != nil {
 		return "", err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("received status code %d", response.StatusCode)
 	}
 
 	ip, err := io.ReadAll(response.Body)
