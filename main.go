@@ -19,14 +19,17 @@ const (
 )
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	timer := time.NewTicker(time.Minute)
-	for range timer.C {
-		ddns()
+
+	logger.Info("starting ddns")
+	
+	for ; true; <-timer.C {
+		ddns(logger)
 	}
 }
 
-func ddns() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+func ddns(logger *slog.Logger) {
 	targetIp, err := publicIp()
 
 	if err != nil {
@@ -69,6 +72,12 @@ func ddns() {
 		if err = client.updateRecord(domain, record); err != nil {
 			logger.Error("error updating record", "error", err)
 		}
+
+		logger.Info("record updated",
+			"domain", domain,
+			"record", record.Name,
+			"ip", targetIp,
+		)
 	}
 }
 
