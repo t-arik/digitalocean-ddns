@@ -12,10 +12,8 @@ import (
 )
 
 const (
-	ipLookupApi          = "https://api.ipify.org"
-	digitialoceanApi     = "https://api.digitalocean.com/v2/domains"
-	envDigitaloceanToken = "DIGITALOCEAN_TOKEN"
-	envDomain            = "DOMAIN"
+	ipLookupApi      = "https://api.ipify.org"
+	digitialoceanApi = "https://api.digitalocean.com/v2/domains"
 )
 
 func main() {
@@ -23,15 +21,15 @@ func main() {
 	timer := time.NewTicker(time.Minute)
 
 	logger.Info("starting ddns")
-	
-	for ; true; <-timer.C {
+
+	ddns(logger)
+	for range timer.C {
 		ddns(logger)
 	}
 }
 
 func ddns(logger *slog.Logger) {
 	targetIp, err := publicIp()
-
 	if err != nil {
 		logger.Error("error fetching the public ip", "error", err)
 		return
@@ -39,9 +37,9 @@ func ddns(logger *slog.Logger) {
 
 	logger.Info("fetched public ip", "ip", targetIp)
 
-	client := digitaloceanClient{token: os.Getenv(envDigitaloceanToken)}
+	client := digitaloceanClient{token: os.Getenv("DO_TOKEN")}
 
-	domain := os.Getenv(envDomain)
+	domain := os.Getenv("DOMAIN")
 
 	records, err := client.getRecords(domain)
 	if err != nil {
