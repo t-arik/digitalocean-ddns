@@ -1,3 +1,3 @@
-module digitalocean-ddns
+module github.com/t-arik/digitalocean-ddns
 
-go 1.22.2
+go 1.23.0
